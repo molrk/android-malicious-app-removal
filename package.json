@@ -9,8 +9,14 @@
     "dist": "electron-builder --publish=never",
     "pack": "electron-builder --dir"
   },
-  "keywords": ["adb", "android", "logcat", "gui", "electron"],
-  "author": "Your Name",
+  "keywords": [
+    "adb",
+    "android",
+    "logcat",
+    "gui",
+    "electron"
+  ],
+  "author": "Declan & Jett",
   "license": "MIT",
   "devDependencies": {
     "electron": "^27.0.0",
@@ -45,3 +51,4 @@
     }
   }
 }
+
