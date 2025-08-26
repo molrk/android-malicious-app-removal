@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ADB Logcat GUI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 100%;
+            max-width: 800px;
+            min-height: 600px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 28px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .status-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-left: 4px solid #28a745;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dc3545;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: #28a745;
+        }
+
+        .device-info {
+            font-size: 14px;
+            color: #666;
+            margin-left: 22px;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn.success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .btn.danger {
+            background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+        }
+
+        .log-container {
+            background: #1e1e1e;
+            border-radius: 12px;
+            padding: 20px;
+            min-height: 300px;
+            margin-bottom: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .log-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 15px;
+            color: #fff;
+        }
+
+        .log-title {
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .log-controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .log-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .log-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .log-output {
+            background: #000;
+            color: #00ff00;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            line-height: 1.4;
+            padding: 15px;
+            border-radius: 8px;
+            height: 250px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            scrollbar-width: thin;
+            scrollbar-color: #444 #222;
+        }
+
+        .log-output::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log-output::-webkit-scrollbar-track {
+            background: #222;
+        }
+
+        .log-output::-webkit-scrollbar-thumb {
+            background: #444;
+            border-radius: 3px;
+        }
+
+        .command-section {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .command-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 14px;
+            margin-bottom: 15px;
+            transition: border-color 0.3s ease;
+        }
+
+        .command-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 12px;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>ADB Logcat GUI</h1>
+            <p>Android Debug Bridge - Log Viewer</p>
+        </div>
+
+        <div class="status-section">
+            <div class="status-indicator">
+                <div class="status-dot" id="statusDot"></div>
+                <strong id="statusText">Checking for device...</strong>
+            </div>
+            <div class="device-info" id="deviceInfo">Please connect your Android device with USB debugging enabled</div>
+        </div>
+
+        <div class="controls">
+            <button class="btn" id="checkDeviceBtn" onclick="checkDevice()">
+                <span id="checkText">Check Device</span>
+            </button>
+            <button class="btn success" id="startLogcatBtn" onclick="startLogcat()" disabled>
+                Start Logcat
+            </button>
+            <button class="btn danger" id="stopLogcatBtn" onclick="stopLogcat()" disabled>
+                Stop Logcat
+            </button>
+            <button class="btn" id="clearLogsBtn" onclick="clearLogs()">
+                Clear Logs
+            </button>
+        </div>
+
+        <div class="log-container">
+            <div class="log-header">
+                <div class="log-title">Logcat Output</div>
+                <div class="log-controls">
+                    <button class="log-btn" onclick="saveLog()">Save Log</button>
+                    <button class="log-btn" onclick="copyLog()">Copy</button>
+                </div>
+            </div>
+            <div class="log-output" id="logOutput">Welcome to ADB Logcat GUI!
+
+To get started:
+1. Connect your Android device via USB
+2. Enable USB Debugging in Developer Options
+3. Click "Check Device" to detect your device
+4. Click "Start Logcat" to begin logging
+
+Note: This is a visual interface. For actual ADB functionality, 
+you'll need to integrate with your system's ADB tools.
+            </div>
+        </div>
+
+        <div class="command-section">
+            <h3 style="margin-bottom: 15px; color: #333;">Custom ADB Command</h3>
+            <input type="text" class="command-input" id="customCommand" placeholder="Enter custom ADB command (e.g., adb shell getprop)" />
+            <button class="btn" onclick="executeCustomCommand()">Execute Command</button>
+        </div>
+
+        <div class="footer">
+            <p>ADB Logcat GUI v1.0 - Enhanced interface for Android debugging</p>
+        </div>
+    </div>
+
+    <script>
+        let isLogcatRunning = false;
+        let connectedDevices = [];
+        let currentDevice = null;
+
+        // Initialize app when DOM loads
+        document.addEventListener('DOMContentLoaded', async function() {
+            addLog('[INFO] ADB Logcat GUI initialized');
+            
+            // Check if we're running in Electron
+            if (!window.electronAPI) {
+                addLog('[ERROR] Not running in Electron environment');
+                addLog('[INFO] Please run with: npm start');
+                addLog('[INFO] Or open this file through the Electron app');
+                
+                // Disable all buttons that require Electron
+                const buttons = ['checkDeviceBtn', 'startLogcatBtn', 'stopLogcatBtn'];
+                buttons.forEach(id => {
+                    const btn = document.getElementById(id);
+                    if (btn) {
+                        btn.disabled = true;
+                        btn.title = 'Requires Electron environment';
+                    }
+                });
+                return;
+            }
+            
+            try {
+                // Check if ADB is available
+                const adbCheck = await window.electronAPI.checkAdb();
+                if (!adbCheck.available) {
+                    addLog('[ERROR] ' + adbCheck.error);
+                    addLog('[INFO] Please install Android SDK Platform Tools');
+                    return;
+                }
+                
+                addLog('[INFO] ' + adbCheck.version);
+                addLog('[INFO] Click "Check Device" to begin');
+            } catch (error) {
+                addLog('[ERROR] Failed to initialize: ' + error.message);
+                addLog('[INFO] Make sure you are running this through Electron');
+            }
+        });
+
+        // Set up event listeners for logcat (only if Electron API is available)
+        if (window.electronAPI) {
+            window.electronAPI.onLogcatData((data) => {
+                addLog(data.trim(), false);
+            });
+
+            window.electronAPI.onLogcatError((error) => {
+                addLog('[ERROR] ' + error.trim());
+            });
+
+            window.electronAPI.onLogcatClosed((code) => {
+                isLogcatRunning = false;
+                const startBtn = document.getElementById('startLogcatBtn');
+                const stopBtn = document.getElementById('stopLogcatBtn');
+                
+                if (startBtn) startBtn.disabled = connectedDevices.length === 0;
+                if (stopBtn) stopBtn.disabled = true;
+                
+                if (code === -1) {
+                    addLog(`[INFO] Logcat stopped due to device disconnect`);
+                } else if (code === 0) {
+                    addLog(`[INFO] Logcat stopped successfully`);
+                } else {
+                    addLog(`[INFO] Logcat stopped (exit code: ${code})`);
+                }
+            });
+
+            // Listen for device status changes
+            if (window.electronAPI.onDeviceStatusChanged) {
+                window.electronAPI.onDeviceStatusChanged((devices) => {
+                    handleDeviceStatusChange(devices);
+                });
+            }
+        }
+
+        async function checkDevice() {
+            if (!window.electronAPI) {
+                addLog('[ERROR] Electron API not available');
+                return;
+            }
+
+            const checkBtn = document.getElementById('checkDeviceBtn');
+            const checkText = document.getElementById('checkText');
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const deviceInfo = document.getElementById('deviceInfo');
+            const startBtn = document.getElementById('startLogcatBtn');
+
+            checkText.innerHTML = '<div class="loading"></div>';
+            checkBtn.disabled = true;
+            statusText.textContent = 'Checking for devices...';
+
+            try {
+                const result = await window.electronAPI.checkDevices();
+                
+                if (!result.success) {
+                    throw new Error(result.error);
+                }
+
+                connectedDevices = result.devices;
+
+                if (connectedDevices.length > 0) {
+                    currentDevice = connectedDevices[0];
+                    statusDot.classList.add('connected');
+                    statusText.textContent = `Device Connected (${connectedDevices.length})`;
+                    
+                    // Get device info
+                    const deviceDetails = await window.electronAPI.getDeviceInfo(currentDevice.id);
+                    deviceInfo.textContent = `Device: ${deviceDetails.manufacturer} ${deviceDetails.model} - Android ${deviceDetails.androidVersion}`;
+                    
+                    startBtn.disabled = false;
+                    addLog(`[INFO] Device detected: ${currentDevice.id}`);
+                    addLog(`[INFO] ${deviceDetails.manufacturer} ${deviceDetails.model} (Android ${deviceDetails.androidVersion})`);
+                    addLog('[INFO] Ready to start logcat');
+                } else {
+                    statusDot.classList.remove('connected');
+                    statusText.textContent = 'No Device Found';
+                    deviceInfo.textContent = 'Please connect your Android device and ensure USB debugging is enabled';
+                    startBtn.disabled = true;
+                    addLog('[ERROR] No devices found');
+                    addLog('[INFO] Make sure USB debugging is enabled and device is connected');
+                }
+            } catch (error) {
+                statusDot.classList.remove('connected');
+                statusText.textContent = 'Error Checking Devices';
+                deviceInfo.textContent = error.message;
+                startBtn.disabled = true;
+                addLog('[ERROR] Failed to check devices: ' + error.message);
+            }
+
+            checkText.textContent = 'Check Device';
+            checkBtn.disabled = false;
+        }
+
+        async function startLogcat() {
+            if (connectedDevices.length === 0 || isLogcatRunning) return;
+
+            const startBtn = document.getElementById('startLogcatBtn');
+            const stopBtn = document.getElementById('stopLogcatBtn');
+
+            try {
+                const result = await window.electronAPI.startLogcat({
+                    clear: false, // Don't clear existing logs by default
+                    format: 'time' // Use time format for better readability
+                });
+
+                if (result.success) {
+                    isLogcatRunning = true;
+                    startBtn.disabled = true;
+                    stopBtn.disabled = false;
+                    addLog('[INFO] Starting logcat...');
+                    addLog('[INFO] Press "Stop Logcat" to end logging');
+                    addLog('--------- beginning of logcat output');
+                } else {
+                    addLog('[ERROR] Failed to start logcat: ' + result.error);
+                }
+            } catch (error) {
+                addLog('[ERROR] Failed to start logcat: ' + error.message);
+            }
+        }
+
+        async function stopLogcat() {
+            if (!isLogcatRunning) return;
+
+            const stopBtn = document.getElementById('stopLogcatBtn');
+            const originalText = stopBtn.textContent;
+            
+            stopBtn.textContent = 'Stopping...';
+            stopBtn.disabled = true;
+
+            try {
+                addLog('[INFO] Stopping logcat...');
+                const result = await window.electronAPI.stopLogcat();
+                
+                if (result.success) {
+                    addLog('[INFO] Stop signal sent successfully');
+                    // UI will be updated by the onLogcatClosed event
+                } else {
+                    addLog('[ERROR] Failed to stop logcat: ' + result.error);
+                    // Reset UI if stop failed
+                    stopBtn.disabled = false;
+                    stopBtn.textContent = originalText;
+                }
+            } catch (error) {
+                addLog('[ERROR] Failed to stop logcat: ' + error.message);
+                stopBtn.disabled = false;
+                stopBtn.textContent = originalText;
+            }
+        }
+
+        function clearLogs() {
+            const logOutput = document.getElementById('logOutput');
+            logOutput.textContent = 'Logs cleared.\nReady for new logging session...\n';
+        }
+
+        async function executeCustomCommand() {
+            const commandInput = document.getElementById('customCommand');
+            const command = commandInput.value.trim();
+
+            if (!command) {
+                addLog('[ERROR] Please enter a command');
+                return;
+            }
+
+            if (connectedDevices.length === 0) {
+                addLog('[ERROR] No device connected. Please check device first.');
+                return;
+            }
+
+            addLog(`[CMD] Executing: ${command}`);
+            
+            try {
+                const result = await window.electronAPI.executeAdbCommand(command);
+                
+                if (result.success) {
+                    if (result.stdout) {
+                        addLog(result.stdout);
+                    }
+                    if (result.stderr) {
+                        addLog('[STDERR] ' + result.stderr);
+                    }
+                    if (!result.stdout && !result.stderr) {
+                        addLog('[INFO] Command executed successfully (no output)');
+                    }
+                } else {
+                    addLog('[ERROR] Command failed: ' + result.error);
+                    if (result.stderr) {
+                        addLog('[STDERR] ' + result.stderr);
+                    }
+                }
+            } catch (error) {
+                addLog('[ERROR] Failed to execute command: ' + error.message);
+            }
+
+            commandInput.value = '';
+        }
+
+        async function saveLog() {
+            const logOutput = document.getElementById('logOutput');
+            const logText = logOutput.textContent;
+            
+            if (!logText.trim()) {
+                addLog('[ERROR] No logs to save');
+                return;
+            }
+
+            const timestamp = new Date().toISOString().slice(0,19).replace(/:/g, '-');
+            const filename = `adb_logcat_${timestamp}.txt`;
+
+            try {
+                const result = await window.electronAPI.saveLog(logText, filename);
+                
+                if (result.success) {
+                    addLog(`[INFO] Log saved to: ${result.path}`);
+                } else {
+                    addLog('[ERROR] Failed to save log: ' + result.error);
+                }
+            } catch (error) {
+                addLog('[ERROR] Failed to save log: ' + error.message);
+            }
+        }
+
+        async function copyLog() {
+            const logOutput = document.getElementById('logOutput');
+            
+            try {
+                await navigator.clipboard.writeText(logOutput.textContent);
+                addLog('[INFO] Log copied to clipboard');
+            } catch (error) {
+                addLog('[ERROR] Failed to copy log: ' + error.message);
+            }
+        }
+
+        function addLog(text, addTimestamp = true) {
+            const logOutput = document.getElementById('logOutput');
+            
+            if (addTimestamp && !text.startsWith('[')) {
+                const timestamp = new Date().toLocaleTimeString();
+                text = `${timestamp} ${text}`;
+            }
+            
+            logOutput.textContent += text + '\n';
+            logOutput.scrollTop = logOutput.scrollHeight;
+        }
+
+        function handleDeviceStatusChange(devices) {
+            const previousDeviceCount = connectedDevices.length;
+            connectedDevices = devices;
+            
+            const statusDot = document.getElementById('statusDot');
+            const statusText = document.getElementById('statusText');
+            const deviceInfo = document.getElementById('deviceInfo');
+            const startBtn = document.getElementById('startLogcatBtn');
+
+            if (devices.length > 0) {
+                currentDevice = devices[0];
+                statusDot.classList.add('connected');
+                statusText.textContent = `Device Connected (${devices.length})`;
+                
+                // Only enable start button if logcat isn't running
+                if (!isLogcatRunning) {
+                    startBtn.disabled = false;
+                }
+                
+                // Log connection if this is a new connection
+                if (previousDeviceCount === 0) {
+                    addLog(`[INFO] Device connected: ${currentDevice.id}`);
+                }
+            } else {
+                statusDot.classList.remove('connected');
+                statusText.textContent = 'No Device Found';
+                deviceInfo.textContent = 'Please connect your Android device and ensure USB debugging is enabled';
+                startBtn.disabled = true;
+                
+                // Log disconnection if we had devices before
+                if (previousDeviceCount > 0) {
+                    addLog('[WARN] All devices disconnected');
+                }
+            }
+        }
+
+        // Handle Enter key in command input
+        document.getElementById('customCommand').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                executeCustomCommand();
+            }
+        });
+    </script>
+</body>
+</html>
