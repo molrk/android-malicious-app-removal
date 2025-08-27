@@ -308,6 +308,11 @@ ipcMain.handle("save-log", async (event, logContent, filename) => {
   });
 });
 
+
+let filterEnabled = false;
+let filterRegex = null;
+let allLogData = []; // Store all log data
+
 // Check if ADB is available with multiple path checking
 ipcMain.handle("check-adb", async () => {
   // Common ADB installation paths on Windows

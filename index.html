@@ -141,6 +141,32 @@
         color: #fff;
       }
 
+      .filter-section {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 10px;
+      }
+
+      .filter-input {
+        flex: 1;
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 6px 10px;
+        border-radius: 4px;
+        font-size: 12px;
+      }
+
+.filter-input::placeholder {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.filter-input:focus {
+  outline: none;
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.15);
+}
       .log-title {
         font-size: 16px;
         font-weight: 600;
@@ -303,12 +329,16 @@
             <button class="log-btn" onclick="copyLog()">Copy</button>
           </div>
         </div>
+      
+        <div class="filter-section">
+          <input type="text" class="filter-input" id="filterInput" placeholder="Filter logs (regex supported)..." />
+          <button class="log-btn" onclick="toggleFilter()" id="filterToggle">Enable Filter</button>
+          <button class="log-btn" onclick="clearFilter()">Clear Filter</button>
+        </div>
         <div class="log-output" id="logOutput">
-          Welcome to ADB Logcat GUI! To get started: 1. Connect your Android
-          device via USB 2. Enable USB Debugging in Developer Options 3. Click
-          "Check Device" to detect your device 4. Click "Start Logcat" to begin
-          logging Note: This is a visual interface. For actual ADB
-          functionality, you'll need to integrate with your system's ADB tools.
+          Welcome to ADB Logcat GUI! To get started: 1. Connect your Android device via USB 2. Enable USB Debugging in
+          Developer Options 3. Click "Check Device" to detect your device 4. Click "Start Logcat" to begin logging Note: This
+          is a visual interface. For actual ADB functionality, you'll need to integrate with your system's ADB tools.
         </div>
       </div>
 
